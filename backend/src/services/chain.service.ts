@@ -43,6 +43,10 @@ export interface AttestPayload {
   sdgIndicator: string;
   coverageAmount?: number;
   mediaHash?: string;
+  // Hash of the blurred workshop image. Optional — matches
+  // Certificate.imageHash nullability. Only the hash goes on-chain, never
+  // the image, its Cloudinary URL, or any asset id.
+  imageHash?: string;
 }
 
 export interface AttestResult {
@@ -72,6 +76,13 @@ function encodePayload(payload: AttestPayload): string {
       // encode as zero bytes32, never omit.
       name: "mediaHash",
       value: payload.mediaHash ?? ethers.ZeroHash,
+      type: "bytes32",
+    },
+    {
+      // Optional: no image provided at issuance — encode as zero bytes32,
+      // never omit, so schema encoding stays well-formed.
+      name: "imageHash",
+      value: payload.imageHash ?? ethers.ZeroHash,
       type: "bytes32",
     },
   ]);
@@ -141,6 +152,7 @@ export interface DecodedAttestation {
   sdgIndicator: string;
   coverageAmount: number | null;
   mediaHash: string | null;
+  imageHash: string | null;
 }
 
 /**
@@ -187,6 +199,11 @@ export async function getAttestation(
       coverageAmount:
         get("coverageAmount") !== undefined ? Number(get("coverageAmount")) : null,
       mediaHash: (get("mediaHash") as string) || null,
+      // Zero bytes32 sentinel (see encodePayload) maps back to null.
+      imageHash:
+        ((get("imageHash") as string) || null) === ethers.ZeroHash
+          ? null
+          : (get("imageHash") as string) || null,
     };
   } catch {
     // Attestation exists but doesn't decode against our schema

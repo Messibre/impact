@@ -14,6 +14,8 @@ export const easConfig = {
 // Leave a visible marker for where the pending image field will be inserted.
 export const EAS_SCHEMA_DEFINITION =
   "string region,uint256 milestoneDate,string sdgIndicator,uint256 coverageAmount,bytes32 mediaHash" +
-  // SCOPE-EXTEND MARKER: the follow-up spec will add one image field here,
-  // e.g. ",bytes32 imageHash". Insert it at the end of this string only.
-  "";
+  // SCOPE-EXTEND: blurred workshop image hash added by the follow-up spec.
+  // Appended at the end so field order stays stable. NOTE: adding a field
+  // means this is a NEW immutable schema — re-register via
+  // `npm run eas:register-schema` and set the new UID in EAS_SCHEMA_UID.
+  ",bytes32 imageHash";
