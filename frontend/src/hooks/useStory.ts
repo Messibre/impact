@@ -10,6 +10,9 @@ export interface StoryViewDTO {
     coverageAmount: number | null;
     txHash: string;
     chainNetwork: string;
+    // Blurred workshop photo (Cloudinary). Public/anonymized by definition,
+    // so it needs no consent check. Null when no image was issued.
+    certificateImageUrl: string | null;
   };
   story: {
     generatedClipUrl: string | null;

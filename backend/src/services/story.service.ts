@@ -86,6 +86,37 @@ export async function createStoryMedia(
   return storyMedia;
 }
 
+/**
+ * Founder-scoped roster read. Returns EVERY Person tied to this
+ * certificate's StoryMedia regardless of consentPublic — this is what the
+ * founder dashboard uses to toggle people back on after they were set
+ * private. It is NOT a violation of the public "no hint of removal" rule
+ * (spec section 8): the route is authenticated and scoped to the founder
+ * who owns this data. Keep this separate from assembleStoryView, whose
+ * public output must stay consent-filtered.
+ */
+export async function listCertificatePeople(
+  certificateId: string
+): Promise<{ id: string; name: string; role: string | null; consentPublic: boolean }[]> {
+  const storyMedia = await prisma.storyMedia.findUnique({
+    where: { certificateId },
+    include: { people: true },
+  });
+
+  if (!storyMedia) {
+    throw new ApiError(404, "No story found");
+  }
+
+  return storyMedia.people.map(
+    (p: { id: string; name: string; role: string | null; consentPublic: boolean }) => ({
+      id: p.id,
+      name: p.name,
+      role: p.role,
+      consentPublic: p.consentPublic,
+    })
+  );
+}
+
 export async function setPersonConsent(
   certificateId: string,
   updates: { id: string; consentPublic: boolean }[]

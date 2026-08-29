@@ -103,6 +103,7 @@ export default function StoryPage() {
             coverageAmount={certificate.coverageAmount}
             txHash={certificate.txHash}
             chainNetwork={certificate.chainNetwork}
+            certificateImageUrl={certificate.certificateImageUrl}
           />
         </div>
       </div>

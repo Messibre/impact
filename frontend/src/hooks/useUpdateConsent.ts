@@ -40,6 +40,10 @@ export function useUpdateConsent(certificateId: string) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
+      // Also refresh the founder-scoped roster so the dashboard list (which
+      // includes private people) reflects the toggle. Public useStory and the
+      // founder people list are separate queries by design.
+      queryClient.invalidateQueries({ queryKey: ["founder-people", certificateId] });
     },
   });
 }

@@ -8,6 +8,8 @@ interface CertificatePanelProps {
   coverageAmount: number | null;
   txHash: string;
   chainNetwork: string;
+  // Blurred workshop photo. Omitted entirely (no placeholder) when absent.
+  certificateImageUrl?: string | null;
 }
 
 export function CertificatePanel({
@@ -17,6 +19,7 @@ export function CertificatePanel({
   coverageAmount,
   txHash,
   chainNetwork,
+  certificateImageUrl,
 }: CertificatePanelProps) {
   const explorerUrl = `https://sepolia.easscan.org/attestation/view/${txHash}`;
 
@@ -27,6 +30,13 @@ export function CertificatePanel({
         <Badge className="bg-emerald-100 text-emerald-800">{chainNetwork}</Badge>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
+        {certificateImageUrl && (
+          <img
+            src={certificateImageUrl}
+            alt="Blurred photo of the workshop this milestone covers"
+            className="mb-2 w-full rounded-md border border-emerald-100"
+          />
+        )}
         <Row label="Region" value={region} />
         <Row label="Date" value={new Date(milestoneDate).toLocaleDateString()} />
         <Row label="SDG indicator" value={sdgIndicator} />

@@ -16,10 +16,9 @@ async function main() {
   registry.connect(signer);
 
   const schema =
-    "string region,uint256 milestoneDate,string sdgIndicator,uint256 coverageAmount,bytes32 mediaHash";
-  // SCOPE-EXTEND MARKER: append the image field here when the follow-up
-  // spec arrives, e.g. ",bytes32 imageHash", then re-run this script and
-  // update EAS_SCHEMA_UID in .env.
+    "string region,uint256 milestoneDate,string sdgIndicator,uint256 coverageAmount,bytes32 mediaHash,bytes32 imageHash";
+  // NOTE: the trailing `bytes32 imageHash` was appended for the certificate-image
+  // follow-up. After running this script, update EAS_SCHEMA_UID in .env.
 
   const tx = await registry.register({
     schema,
