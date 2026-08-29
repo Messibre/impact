@@ -30,9 +30,11 @@ model Certificate {
   createdAt      DateTime    @default(now())
   storyMedia     StoryMedia?
 
-  // NOTE(scope-extend): a follow-up spec adds one image field here
-  // (e.g. `imageHash String?`). This flat, nullable-field shape is
-  // intentionally left easy to extend without a migration rewrite.
+  // SCOPE-EXTEND (follow-up spec): blurred workshop image. The image itself
+  // lives off-chain on Cloudinary (certificateImageUrl); only imageHash is
+  // mirrored on-chain alongside mediaHash. Both nullable — image is optional.
+  certificateImageUrl String? // Cloudinary secure_url, blurred version only
+  imageHash           String? // hash of the blurred image bytes, mirrored on-chain
 }
 
 model StoryMedia {

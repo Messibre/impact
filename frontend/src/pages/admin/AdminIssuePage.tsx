@@ -47,6 +47,7 @@ function IssueForm({ adminToken }: { adminToken: string }) {
     milestoneDate: "",
     coverageAmount: "",
   });
+  const [image, setImage] = useState<File | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +57,7 @@ function IssueForm({ adminToken }: { adminToken: string }) {
       sdgIndicator: form.sdgIndicator,
       milestoneDate: form.milestoneDate,
       coverageAmount: form.coverageAmount ? Number(form.coverageAmount) : undefined,
+      image,
       adminToken,
     });
   };
@@ -104,6 +106,16 @@ function IssueForm({ adminToken }: { adminToken: string }) {
                   onChange={(e) => setForm({ ...form, coverageAmount: e.target.value })}
                 />
               </Field>
+              <Field label="Workshop photo (optional)">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImage(e.target.files?.[0] ?? null)}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Blurred automatically before it is stored — never keep a photo with a recognizable face.
+                </p>
+              </Field>
 
               {issue.isError && <Alert variant="destructive">On-chain attestation failed, please retry.</Alert>}
 
@@ -120,6 +132,15 @@ function IssueForm({ adminToken }: { adminToken: string }) {
               <div className="flex justify-center py-2">
                 <QRCodeDisplay url={issue.data.qrUrl} />
               </div>
+              {issue.data.certificateImageUrl && (
+                <Field label="Blurred workshop photo">
+                  <img
+                    src={issue.data.certificateImageUrl}
+                    alt="Blurred workshop photo stored for this certificate"
+                    className="w-full rounded-md border border-slate-200"
+                  />
+                </Field>
+              )}
               <Field label="Transaction">
                 <a href={explorerUrl} target="_blank" rel="noreferrer" className="text-sm text-emerald-700 underline">
                   View on EAS Sepolia explorer

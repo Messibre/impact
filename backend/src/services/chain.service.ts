@@ -43,6 +43,10 @@ export interface AttestPayload {
   sdgIndicator: string;
   coverageAmount?: number;
   mediaHash?: string;
+  // Hash of the blurred workshop image. Optional — matches
+  // Certificate.imageHash nullability. Only the hash goes on-chain, never
+  // the image, its Cloudinary URL, or any asset id.
+  imageHash?: string;
 }
 
 export interface AttestResult {
@@ -74,7 +78,38 @@ function encodePayload(payload: AttestPayload): string {
       value: payload.mediaHash ?? ethers.ZeroHash,
       type: "bytes32",
     },
+    {
+      // Optional: no image provided at issuance — encode as zero bytes32,
+      // never omit, so schema encoding stays well-formed.
+      name: "imageHash",
+      value: payload.imageHash ?? ethers.ZeroHash,
+      type: "bytes32",
+    },
   ]);
+}
+
+// The EAS contract emits this event on every successful attestation. We
+// decode the UID from the transaction receipt's own logs rather than letting
+// the SDK's getUIDsFromAttestReceipt call eth_getLogs — some RPC tiers cap
+// getLogs to a tiny block range and reject that call, which surfaces as a
+// misleading "Unable to process Attested events" even though the tx mined.
+const ATTESTED_EVENT_ABI = [
+  "event Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaUID)",
+];
+
+function uidFromReceipt(receipt: ethers.TransactionReceipt): string | null {
+  const iface = new ethers.Interface(ATTESTED_EVENT_ABI);
+  for (const log of receipt.logs) {
+    try {
+      const parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
+      if (parsed?.name === "Attested") {
+        return parsed.args.uid as string;
+      }
+    } catch {
+      // Not an Attested log (other events in the receipt) — skip.
+    }
+  }
+  return null;
 }
 
 async function attestOnce(payload: AttestPayload): Promise<AttestResult> {
@@ -91,10 +126,34 @@ async function attestOnce(payload: AttestPayload): Promise<AttestResult> {
     },
   });
 
-  const attestationUID = await tx.wait();
-  const txHash = tx.receipt?.hash ?? "";
+  // tx.wait() sends the transaction, populates tx.receipt, THEN runs the
+  // SDK's internal UID parser. That parser can throw "Unable to process
+  // Attested events" on some RPC/contract combos even though the tx mined
+  // fine. Since tx.receipt is set before that parser runs, we let the SDK
+  // return the UID on the happy path, and on failure fall back to decoding
+  // the Attested event from tx.receipt.logs ourselves.
+  let sdkUID: string | null = null;
+  try {
+    sdkUID = await tx.wait();
+  } catch (waitErr) {
+    if (!tx.receipt) {
+      // No receipt means the tx genuinely didn't mine — real failure.
+      throw waitErr;
+    }
+    // Receipt exists; the throw was only the SDK's UID parsing. Continue.
+  }
 
-  return { attestationUID, txHash };
+  const receipt = tx.receipt;
+  if (!receipt) {
+    throw new Error("Attestation transaction produced no receipt");
+  }
+
+  const attestationUID = sdkUID ?? uidFromReceipt(receipt);
+  if (!attestationUID) {
+    throw new Error("Attested event not found in transaction receipt");
+  }
+
+  return { attestationUID, txHash: receipt.hash };
 }
 
 /**
@@ -141,6 +200,7 @@ export interface DecodedAttestation {
   sdgIndicator: string;
   coverageAmount: number | null;
   mediaHash: string | null;
+  imageHash: string | null;
 }
 
 /**
@@ -187,6 +247,11 @@ export async function getAttestation(
       coverageAmount:
         get("coverageAmount") !== undefined ? Number(get("coverageAmount")) : null,
       mediaHash: (get("mediaHash") as string) || null,
+      // Zero bytes32 sentinel (see encodePayload) maps back to null.
+      imageHash:
+        ((get("imageHash") as string) || null) === ethers.ZeroHash
+          ? null
+          : (get("imageHash") as string) || null,
     };
   } catch {
     // Attestation exists but doesn't decode against our schema

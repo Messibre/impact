@@ -24,6 +24,10 @@ export interface StoryViewDTO {
     coverageAmount: number | null;
     txHash: string;
     chainNetwork: string;
+    // Blurred workshop image (off-chain Cloudinary URL). null when none was
+    // attached at issuance. The unblurred original is never stored, so this
+    // URL is always safe to serve publicly.
+    certificateImageUrl: string | null;
   };
   story: {
     generatedClipUrl: string | null;
@@ -110,6 +114,7 @@ function toCertificateDTO(
     milestoneDate: Date;
     chainNetwork: string;
     txHash: string;
+    certificateImageUrl: string | null;
   },
   onChain: NonNullable<Awaited<ReturnType<typeof getAttestation>>>
 ) {
@@ -124,5 +129,9 @@ function toCertificateDTO(
     // doesn't carry the hash of the tx that created it.
     txHash: certificate.txHash,
     chainNetwork: certificate.chainNetwork,
+    // Off-chain: the blurred image URL is not part of the attestation, only
+    // its hash (onChain.imageHash) is. We surface the URL for display; a
+    // verifier can re-hash the fetched image and compare to onChain.imageHash.
+    certificateImageUrl: certificate.certificateImageUrl,
   };
 }

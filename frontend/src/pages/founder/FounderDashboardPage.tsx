@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useStory } from "../../hooks/useStory";
 import { useUploadStory, PersonFormRow } from "../../hooks/useUploadStory";
 import { useUpdateConsent } from "../../hooks/useUpdateConsent";
+import { useFounderPeople } from "../../hooks/useFounderPeople";
 import { useDeleteStory } from "../../hooks/useDeleteStory";
 import { getFounderToken } from "../../lib/founderToken";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
@@ -140,17 +141,17 @@ function ManageConsentSection({
 }) {
   const updateConsent = useUpdateConsent(certificateId);
   const deleteStory = useDeleteStory(certificateId);
+  const { data: people, isLoading: peopleLoading } = useFounderPeople(certificateId);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  // NOTE: GET /story only ever returns currently-public people (private
-  // ones are filtered out with no trace, per spec section 8) — so once
-  // someone is toggled private here, they disappear from this list too.
-  // That matches FR-13/FR-15's "no hint they were removed" rule, but it
-  // does mean this hackathon-scope dashboard has no way to toggle a
-  // private person back to public after a page reload. A real build would
-  // add a founder-scoped read returning full Person rows regardless of
-  // consent; out of scope for the six specced endpoints here.
+  // The consent list is populated from the founder-scoped
+  // GET /certificates/:id/people endpoint (useFounderPeople), NOT from
+  // GET /story — the public story only returns currently-public people, so
+  // a person toggled private would vanish from this list and could never be
+  // toggled back. The founder endpoint returns every person regardless of
+  // consent, which is what makes re-enabling work. The public page still
+  // uses useStory unchanged.
 
   const handleToggle = (personId: string, value: boolean) => {
     setSavingId(personId);
@@ -170,15 +171,16 @@ function ManageConsentSection({
           <CardTitle>Manage consent</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {story.story.visiblePeople.length === 0 && (
-            <p className="text-sm text-slate-500">No one is currently tagged as public.</p>
+          {peopleLoading && <p className="text-sm text-slate-500">Loading people…</p>}
+          {!peopleLoading && (!people || people.length === 0) && (
+            <p className="text-sm text-slate-500">No people were tagged in this story.</p>
           )}
-          {story.story.visiblePeople.map((p) => (
+          {people?.map((p) => (
             <PersonConsentRow
               key={p.id}
               name={p.name}
               role={p.role ?? undefined}
-              consentPublic={true}
+              consentPublic={p.consentPublic}
               onConsentChange={(v) => handleToggle(p.id, v)}
               saving={savingId === p.id}
             />

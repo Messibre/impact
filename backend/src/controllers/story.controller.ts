@@ -3,7 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { sendResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
 import { uploadStorySchema } from "../schemas/story.schema";
-import { createStoryMedia, purgeStoryMedia } from "../services/story.service";
+import { createStoryMedia, purgeStoryMedia, listCertificatePeople } from "../services/story.service";
 import { assembleStoryView } from "../services/storyView.service";
 import { saveFile } from "../services/storage.service";
 
@@ -67,6 +67,16 @@ export const getPublicStory = asyncHandler(async (req: Request, res: Response) =
   }
 
   sendResponse(res, 200, "Story retrieved", view);
+});
+
+// Founder-scoped roster. Unlike getPublicStory, this returns every Person
+// regardless of consentPublic, so the dashboard can toggle private people
+// back to public. Guarded by founderAuthMiddleware (scoped to :certificateId).
+export const getCertificatePeople = asyncHandler(async (req: Request, res: Response) => {
+  const { certificateId } = req.params;
+  const people = await listCertificatePeople(certificateId);
+
+  sendResponse(res, 200, "People retrieved", { people });
 });
 
 export const deleteStory = asyncHandler(async (req: Request, res: Response) => {
