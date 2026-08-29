@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useStory } from "../../hooks/useStory";
+import { resolveMediaUrl } from "../../lib/axios";
 import { VideoPlayer } from "../../components/common/VideoPlayer";
 import { CertificatePanel } from "../../components/common/CertificatePanel";
 import { ShareButton } from "../../components/common/ShareButton";
@@ -60,7 +61,9 @@ export default function StoryPage() {
             </Card>
           )}
 
-          {storyStatus === "ready" && story.generatedClipUrl && <VideoPlayer src={story.generatedClipUrl} />}
+          {storyStatus === "ready" && story.generatedClipUrl && (
+            <VideoPlayer src={resolveMediaUrl(story.generatedClipUrl)!} />
+          )}
 
           {storyStatus === "ready" && !story.generatedClipUrl && (
             <Card>
