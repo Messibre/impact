@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck, CheckCircle2, ExternalLink, Copy, Check, KeyRound } from "lucide-react";
+import { ShieldCheck, CheckCircle2, ExternalLink, Copy, Check, KeyRound, Send } from "lucide-react";
 import { useIssueCertificate } from "../../hooks/useIssueCertificate";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -60,6 +60,8 @@ function IssueForm({ adminToken }: { adminToken: string }) {
   });
   const [image, setImage] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedBoth, setCopiedBoth] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,11 +78,32 @@ function IssueForm({ adminToken }: { adminToken: string }) {
 
   const explorerUrl = issue.data ? `https://sepolia.easscan.org/attestation/view/${issue.data.txHash}` : "";
 
+  // The QR/donor link points at /story/:attestationUID. The founder upload link
+  // is a different route (/upload/:certificateId) — build it from the same origin.
+  const uploadUrl = (() => {
+    if (!issue.data) return "";
+    let origin = "";
+    try {
+      origin = new URL(issue.data.qrUrl).origin;
+    } catch {
+      origin = window.location.origin;
+    }
+    return `${origin}/upload/${issue.data.certificateId}`;
+  })();
+
   const copyPassword = () => {
     if (!issue.data) return;
     navigator.clipboard.writeText(issue.data.founderPassword);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyBoth = () => {
+    if (!issue.data) return;
+    const message = `Upload your impact story here: ${uploadUrl}\nYour one-time password: ${issue.data.founderPassword}`;
+    navigator.clipboard.writeText(message);
+    setCopiedBoth(true);
+    setTimeout(() => setCopiedBoth(false), 2000);
   };
 
   return (
@@ -150,12 +173,60 @@ function IssueForm({ adminToken }: { adminToken: string }) {
                 Certificate issued successfully and attested on-chain.
               </Alert>
 
+              {/* Founder handoff — the upload link + one-time password belong together
+                  so the admin can send both to the founder in a single message. */}
+              <div className="rounded-2xl border border-border bg-surface-muted p-4 sm:p-5">
+                <div className="mb-3 flex items-center gap-1.5 text-sm font-bold text-foreground">
+                  <Send size={15} />
+                  Send these to the founder
+                </div>
+
+                <Field label="Upload link">
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input readOnly value={uploadUrl} className="bg-surface font-mono text-xs" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText(uploadUrl);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                    >
+                      {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                      {copiedLink ? "Copied" : "Copy"}
+                    </Button>
+                  </div>
+                </Field>
+
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+                  <div className="mb-2 flex items-center gap-1.5 text-sm font-bold text-amber-800">
+                    <KeyRound size={15} />
+                    One-time password — shown once
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input readOnly value={issue.data.founderPassword} className="bg-surface font-mono" />
+                    <Button type="button" variant="outline" className="shrink-0" onClick={copyPassword}>
+                      {copied ? <Check size={16} /> : <Copy size={16} />}
+                      {copied ? "Copied" : "Copy"}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button type="button" size="lg" className="mt-4 w-full" onClick={copyBoth}>
+                  {copiedBoth ? <Check size={16} /> : <Copy size={16} />}
+                  {copiedBoth ? "Link & password copied" : "Copy link & password"}
+                </Button>
+              </div>
+
+              {/* Donor-facing QR — points at the public verified story page. */}
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface-muted py-5">
                 <QRCodeDisplay url={issue.data.qrUrl} size={168} />
                 <p className="px-4 text-center text-xs text-muted">
-                  Founder scans this to open their story dashboard.
+                  Donors scan this to view the verified story.
                 </p>
-                <ShareButton url={issue.data.qrUrl} label="Copy founder link" />
+                <ShareButton url={issue.data.qrUrl} label="Copy donor link" />
               </div>
 
               <Field label="Certificate ID">
