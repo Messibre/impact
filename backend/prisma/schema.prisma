@@ -1,0 +1,63 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Founder {
+  id           String        @id @default(uuid())
+  workshopName String
+  region       String
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  certificates Certificate[]
+}
+
+model Certificate {
+  id             String      @id // = EAS attestation UID, set explicitly at creation — never DB-generated
+  founderId      String
+  founder        Founder     @relation(fields: [founderId], references: [id])
+  sdgIndicator   String
+  milestoneDate  DateTime
+  coverageAmount Int?
+  mediaHash      String?
+  txHash         String
+  chainNetwork   String      @default("sepolia")
+  createdAt      DateTime    @default(now())
+  storyMedia     StoryMedia?
+
+  // NOTE(scope-extend): a follow-up spec adds one image field here
+  // (e.g. `imageHash String?`). This flat, nullable-field shape is
+  // intentionally left easy to extend without a migration rewrite.
+}
+
+model StoryMedia {
+  id                String      @id @default(uuid())
+  certificateId     String      @unique
+  certificate       Certificate @relation(fields: [certificateId], references: [id])
+  voiceUrl          String
+  clipUrl           String
+  milestoneText     String
+  generatedClipUrl  String?
+  generatedPageSlug String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  people            Person[]
+}
+
+model Person {
+  id            String     @id @default(uuid())
+  storyMediaId  String
+  storyMedia    StoryMedia @relation(fields: [storyMediaId], references: [id], onDelete: Cascade)
+  name          String
+  role          String?
+  // No default value on purpose. consentPublic must be explicitly set
+  // on every insert — enforced again at the application layer in
+  // story.schema.ts and story.service.ts. See consent enforcement notes there.
+  consentPublic Boolean
+  updatedAt     DateTime   @updatedAt
+}
