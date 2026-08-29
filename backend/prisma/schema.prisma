@@ -1,11 +1,17 @@
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Pin all app tables to a dedicated schema so we never touch the unrelated
+  // data living in this database's `public` schema. multiSchema qualifies every
+  // table with `proof_of_impact`, so this holds regardless of any ?schema= param
+  // on DATABASE_URL.
+  schemas  = ["proof_of_impact"]
 }
 
 model Founder {
@@ -15,6 +21,8 @@ model Founder {
   passwordHash String
   createdAt    DateTime      @default(now())
   certificates Certificate[]
+
+  @@schema("proof_of_impact")
 }
 
 model Certificate {
@@ -35,6 +43,8 @@ model Certificate {
   // mirrored on-chain alongside mediaHash. Both nullable — image is optional.
   certificateImageUrl String? // Cloudinary secure_url, blurred version only
   imageHash           String? // hash of the blurred image bytes, mirrored on-chain
+
+  @@schema("proof_of_impact")
 }
 
 model StoryMedia {
@@ -49,6 +59,8 @@ model StoryMedia {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   people            Person[]
+
+  @@schema("proof_of_impact")
 }
 
 model Person {
@@ -62,4 +74,6 @@ model Person {
   // story.schema.ts and story.service.ts. See consent enforcement notes there.
   consentPublic Boolean
   updatedAt     DateTime   @updatedAt
+
+  @@schema("proof_of_impact")
 }
