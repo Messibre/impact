@@ -191,6 +191,12 @@ export async function attestOnChain(payload: AttestPayload): Promise<AttestResul
 }
 
 function mapAttestError(err: unknown): ApiError {
+  // Log the real underlying cause so it surfaces in the host logs (Render,
+  // etc.). The client only ever sees the generic message below, so without
+  // this the true reason (bad address, wrong schema UID, RPC failure, revert)
+  // is invisible in production.
+  const message = err instanceof Error ? err.message : String(err);
+  console.error("[v0][attest] on-chain attestation failed:", message, err);
   return new ApiError(502, "On-chain attestation failed, please retry");
 }
 
