@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Lock } from "lucide-react";
 import { useFounderLogin } from "../../hooks/useFounderLogin";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { Alert } from "../../components/ui/Alert";
@@ -35,18 +36,22 @@ export default function FounderLoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm items-center px-4">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Founder login</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="animate-rise w-full">
+        <CardContent className="pt-6">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
+              <Lock size={20} />
+            </div>
+            <h1 className="text-xl font-extrabold tracking-tight text-foreground">Founder login</h1>
+            <p className="mt-1 text-sm text-muted">Enter your one-time password to manage this story.</p>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-600">Certificate ID</label>
-              <Input value={certificateId ?? ""} readOnly className="bg-slate-50 text-slate-500" />
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">Certificate ID</label>
+              <Input value={certificateId ?? ""} readOnly className="bg-surface-muted text-muted" />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-600">Password</label>
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">Password</label>
               <Input
                 type="password"
                 value={password}
@@ -55,10 +60,10 @@ export default function FounderLoginPage() {
               />
             </div>
             {errorMessage && <Alert variant="destructive">{errorMessage}</Alert>}
-            <Button type="submit" className="w-full" disabled={login.isPending}>
+            <Button type="submit" size="lg" className="w-full" disabled={login.isPending}>
               {login.isPending ? "Signing in…" : "Sign in"}
             </Button>
-            <p className="text-center text-xs text-slate-400">
+            <p className="text-center text-xs text-muted">
               Don't have your password? Contact your program coordinator.
             </p>
           </form>

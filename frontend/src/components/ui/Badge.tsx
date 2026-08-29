@@ -3,7 +3,7 @@ import { HTMLAttributes } from "react";
 export function Badge({ className = "", ...props }: HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
-      className={`inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800 ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-foreground ${className}`}
       {...props}
     />
   );
