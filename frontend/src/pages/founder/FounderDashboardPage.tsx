@@ -6,6 +6,7 @@ import { useUpdateConsent } from "../../hooks/useUpdateConsent";
 import { useFounderPeople } from "../../hooks/useFounderPeople";
 import { useDeleteStory } from "../../hooks/useDeleteStory";
 import { getFounderToken } from "../../lib/founderToken";
+import { resolveMediaUrl } from "../../lib/axios";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -162,8 +163,8 @@ function ManageConsentSection({
 
   return (
     <div className="space-y-6">
-      {story.storyStatus === "ready" && story.story.generatedClipUrl && (
-        <VideoPlayer src={story.story.generatedClipUrl} />
+            {story.storyStatus === "ready" && story.story.generatedClipUrl && (
+              <VideoPlayer src={resolveMediaUrl(story.story.generatedClipUrl)!} />
       )}
 
       <Card>
