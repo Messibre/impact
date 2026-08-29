@@ -55,6 +55,17 @@ export interface AttestResult {
 }
 
 function encodePayload(payload: AttestPayload): string {
+  console.log("[v0] encodePayload SCHEMA_DEF:", JSON.stringify(EAS_SCHEMA_DEFINITION));
+  console.log("[v0] encodePayload payload:", {
+    region: payload.region,
+    milestoneDate: payload.milestoneDate,
+    sdgIndicator: payload.sdgIndicator,
+    coverageAmount: payload.coverageAmount,
+    mediaHash: payload.mediaHash,
+    imageHash: payload.imageHash,
+    imageHashType: typeof payload.imageHash,
+    zeroHash: ethers.ZeroHash,
+  });
   const schemaEncoder = new SchemaEncoder(EAS_SCHEMA_DEFINITION);
   return schemaEncoder.encodeData([
     { name: "region", value: payload.region, type: "string" },
