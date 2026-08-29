@@ -55,17 +55,6 @@ export interface AttestResult {
 }
 
 function encodePayload(payload: AttestPayload): string {
-  console.log("[v0] encodePayload SCHEMA_DEF:", JSON.stringify(EAS_SCHEMA_DEFINITION));
-  console.log("[v0] encodePayload payload:", {
-    region: payload.region,
-    milestoneDate: payload.milestoneDate,
-    sdgIndicator: payload.sdgIndicator,
-    coverageAmount: payload.coverageAmount,
-    mediaHash: payload.mediaHash,
-    imageHash: payload.imageHash,
-    imageHashType: typeof payload.imageHash,
-    zeroHash: ethers.ZeroHash,
-  });
   const schemaEncoder = new SchemaEncoder(EAS_SCHEMA_DEFINITION);
   return schemaEncoder.encodeData([
     { name: "region", value: payload.region, type: "string" },
@@ -154,6 +143,7 @@ export async function attestOnChain(payload: AttestPayload): Promise<AttestResul
 }
 
 function mapAttestError(err: unknown): ApiError {
+  console.log("[v0] mapAttestError raw:", err instanceof Error ? (err.stack || err.message) : String(err));
   return new ApiError(502, "On-chain attestation failed, please retry");
 }
 
