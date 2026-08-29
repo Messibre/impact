@@ -88,6 +88,30 @@ function encodePayload(payload: AttestPayload): string {
   ]);
 }
 
+// The EAS contract emits this event on every successful attestation. We
+// decode the UID from the transaction receipt's own logs rather than letting
+// the SDK's getUIDsFromAttestReceipt call eth_getLogs — some RPC tiers cap
+// getLogs to a tiny block range and reject that call, which surfaces as a
+// misleading "Unable to process Attested events" even though the tx mined.
+const ATTESTED_EVENT_ABI = [
+  "event Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaUID)",
+];
+
+function uidFromReceipt(receipt: ethers.TransactionReceipt): string | null {
+  const iface = new ethers.Interface(ATTESTED_EVENT_ABI);
+  for (const log of receipt.logs) {
+    try {
+      const parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
+      if (parsed?.name === "Attested") {
+        return parsed.args.uid as string;
+      }
+    } catch {
+      // Not an Attested log (other events in the receipt) — skip.
+    }
+  }
+  return null;
+}
+
 async function attestOnce(payload: AttestPayload): Promise<AttestResult> {
   const easClient = getEas();
   const encodedData = encodePayload(payload);
@@ -102,8 +126,26 @@ async function attestOnce(payload: AttestPayload): Promise<AttestResult> {
     },
   });
 
-  const attestationUID = await tx.wait();
-  const txHash = tx.receipt?.hash ?? "";
+  // Prefer decoding the UID from the mined receipt (no eth_getLogs call).
+  // Fall back to the SDK's tx.wait() only if the event isn't found.
+  let attestationUID: string | null = null;
+  let txHash = "";
+
+  try {
+    // getEas() (called above) has initialized the module-level provider.
+    const receipt = await provider!.waitForTransaction(tx.receipt?.hash ?? "");
+    if (receipt) {
+      txHash = receipt.hash;
+      attestationUID = uidFromReceipt(receipt);
+    }
+  } catch {
+    // Receipt fetch failed — fall through to SDK path below.
+  }
+
+  if (!attestationUID) {
+    attestationUID = await tx.wait();
+    txHash = txHash || tx.receipt?.hash || "";
+  }
 
   return { attestationUID, txHash };
 }
