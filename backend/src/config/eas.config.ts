@@ -6,7 +6,7 @@ import { getAddress, isAddress } from "ethers";
 // missing or malformed (e.g. a truncated address that fails checksum).
 // Stored lowercase so getAddress() computes the correct EIP-55 checksum
 // itself, rather than validating a hand-typed mixed-case string.
-const SEPOLIA_EAS_CONTRACT = "0xc2679fbd37d54388ce493f1db75320d236e18157";
+const SEPOLIA_EAS_CONTRACT = "0xc2679fbd37d54388ce493f1db75320d236e1815e";
 const SEPOLIA_SCHEMA_REGISTRY = "0x0a7e2ff54e76b8e6659aedc9103fb21c038050d0";
 
 // Resolve an address from an env var, falling back to a known-good default

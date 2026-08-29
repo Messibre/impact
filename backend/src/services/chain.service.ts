@@ -126,28 +126,34 @@ async function attestOnce(payload: AttestPayload): Promise<AttestResult> {
     },
   });
 
-  // Prefer decoding the UID from the mined receipt (no eth_getLogs call).
-  // Fall back to the SDK's tx.wait() only if the event isn't found.
-  let attestationUID: string | null = null;
-  let txHash = "";
-
+  // tx.wait() sends the transaction, populates tx.receipt, THEN runs the
+  // SDK's internal UID parser. That parser can throw "Unable to process
+  // Attested events" on some RPC/contract combos even though the tx mined
+  // fine. Since tx.receipt is set before that parser runs, we let the SDK
+  // return the UID on the happy path, and on failure fall back to decoding
+  // the Attested event from tx.receipt.logs ourselves.
+  let sdkUID: string | null = null;
   try {
-    // getEas() (called above) has initialized the module-level provider.
-    const receipt = await provider!.waitForTransaction(tx.receipt?.hash ?? "");
-    if (receipt) {
-      txHash = receipt.hash;
-      attestationUID = uidFromReceipt(receipt);
+    sdkUID = await tx.wait();
+  } catch (waitErr) {
+    if (!tx.receipt) {
+      // No receipt means the tx genuinely didn't mine — real failure.
+      throw waitErr;
     }
-  } catch {
-    // Receipt fetch failed — fall through to SDK path below.
+    // Receipt exists; the throw was only the SDK's UID parsing. Continue.
   }
 
+  const receipt = tx.receipt;
+  if (!receipt) {
+    throw new Error("Attestation transaction produced no receipt");
+  }
+
+  const attestationUID = sdkUID ?? uidFromReceipt(receipt);
   if (!attestationUID) {
-    attestationUID = await tx.wait();
-    txHash = txHash || tx.receipt?.hash || "";
+    throw new Error("Attested event not found in transaction receipt");
   }
 
-  return { attestationUID, txHash };
+  return { attestationUID, txHash: receipt.hash };
 }
 
 /**
@@ -185,7 +191,6 @@ export async function attestOnChain(payload: AttestPayload): Promise<AttestResul
 }
 
 function mapAttestError(err: unknown): ApiError {
-  console.log("[v0] mapAttestError raw:", err instanceof Error ? (err.stack || err.message) : String(err));
   return new ApiError(502, "On-chain attestation failed, please retry");
 }
 
