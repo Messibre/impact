@@ -8,8 +8,31 @@ The result is a page a donor can scan, read, and trust: the milestone is cryptog
 
 ---
 
+## Screenshots
+
+### Public verification page (donor-facing)
+
+The page a donor lands on after scanning the QR code: the human story (voice/video), the featured people who consented to appear, and a cryptographic "Verified on-chain" panel linking to the live Sepolia attestation.
+
+![Public verification / story page](docs/screenshots/story-page.png)
+
+### Admin — issue a certificate
+
+The operator console for minting a new on-chain certificate and handing off the founder's private upload link and one-time password.
+
+![Admin issue certificate page](docs/screenshots/admin-issue.png)
+
+### Founder access
+
+The per-certificate, password-protected gate a founder uses to upload their story and manage who appears publicly.
+
+![Founder login page](docs/screenshots/founder-login.png)
+
+---
+
 ## Table of contents
 
+- [Screenshots](#screenshots)
 - [The problem](#the-problem)
 - [How it works](#how-it-works)
 - [Roles](#roles)
