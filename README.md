@@ -8,8 +8,49 @@ The result is a page a donor can scan, read, and trust: the milestone is cryptog
 
 ---
 
+## Screenshots
+
+### Landing page
+
+The public entry point. Visitors can paste a certificate ID or story link to verify any milestone, and see how the on-chain, privacy-first model works.
+
+![Landing / home page](docs/screenshots/home.png)
+
+### Public verification page (donor-facing)
+
+The page a donor lands on after scanning the QR code: the human story (voice/video), its caption, and a cryptographic "Verified on-chain" panel with the blurred workshop photo, milestone metadata, and a link to the live Sepolia attestation.
+
+![Public verification / story page](docs/screenshots/story.png)
+
+### On-chain attestation (EAS, Sepolia)
+
+Every certificate is a real [Ethereum Attestation Service](https://attest.org) attestation on Sepolia — independently verifiable on the public explorer. The decoded data carries the region, milestone date, SDG indicator, coverage, and the media/image hashes; no personal data is ever written on-chain.
+
+![EAS on-chain attestation on Sepolia](docs/screenshots/onchain-attestation.png)
+
+### Admin — issue a certificate
+
+The operator console for minting a new on-chain certificate. The optional workshop photo is blurred automatically before storage so no recognizable face is ever kept.
+
+![Admin issue certificate form](docs/screenshots/admin-issue.png)
+
+### Admin — hand off to the founder
+
+After issuing, the operator gets a private upload link and a one-time password to send to the founder (copied together with one button), plus a separate QR code that donors scan to view the verified story.
+
+![Admin certificate hand-off panel](docs/screenshots/admin-handoff.png)
+
+### Founder — upload a story
+
+The per-certificate, password-protected workspace where a founder records or uploads a voice note and clip, adds a milestone line, and tags the people featured — setting each person's public/private consent.
+
+![Founder story upload page](docs/screenshots/founder-upload.png)
+
+---
+
 ## Table of contents
 
+- [Screenshots](#screenshots)
 - [The problem](#the-problem)
 - [How it works](#how-it-works)
 - [Roles](#roles)
